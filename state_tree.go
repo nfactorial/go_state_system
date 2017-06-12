@@ -19,10 +19,10 @@ func NewStateTree() *StateTree {
 //! \brief Invoked when the state tree is ready for use and game systems may be prepared for processing.
 //! \param initArgs [in] -
 //!        Initialization information for use by the state tree.
-func (d *StateTree) OnInitialize(initArgs InitArgs) {
-	initArgs.StateTree = d
+func (tree *StateTree) OnInitialize(initArgs *InitArgs) {
+	initArgs.StateTree = tree
 
-	for _, state := range d.stateMap {
+	for _, state := range tree.stateMap {
 		// We only pass the call onto root states, they will pass it onto their children
 		if state.parent == nil {
 			state.OnInitialize(initArgs)
@@ -31,8 +31,8 @@ func (d *StateTree) OnInitialize(initArgs InitArgs) {
 }
 
 //! \brief Invoked when the state tree is about to be removed from the running title.
-func (d *StateTree) OnDestroy() {
-	for _, state := range d.stateMap {
+func (tree *StateTree) OnDestroy() {
+	for _, state := range tree.stateMap {
 		// We only pass the call onto root states, they will pass it onto their children
 		if state.parent == nil {
 			state.OnDestroy()
@@ -43,44 +43,55 @@ func (d *StateTree) OnDestroy() {
 //! \brief Called each frame the state tree should be processed.
 //! \param updateArgs [in] -
 //!        Details about the current frame being processed.
-func (d *StateTree) OnUpdate(updateArgs UpdateArgs) {
-	if d.activeState != nil {
-		d.activeState.OnUpdate(updateArgs)
+func (tree *StateTree) OnUpdate(updateArgs UpdateArgs) {
+	if tree.activeState != nil {
+		tree.activeState.OnUpdate(updateArgs)
 	}
 
-	d.commitStateChange()
+	tree.commitStateChange()
 }
 
-func (d *StateTree) requestStateChange(name string) {
-	state, exists := d.stateMap[name]
+func (tree *StateTree) requestStateChange(name string) {
+	state, exists := tree.stateMap[name]
 	if exists {
-		d.pendingState = state
+		tree.pendingState = state
 	}
 	// TODO: Should we raise/log an error if the requested state was invalid?
 }
 
-func (d *StateTree) commitStateChange() {
+func (tree *StateTree) addState(name string, state *GameState) bool {
+	if state != nil {
+		if tree.findGameState(name) == nil {
+			tree.stateMap[name] = state
+			return true
+		}
+	}
+
+	return false
+}
+
+func (tree *StateTree) commitStateChange() {
 	changeCounter := 0
-	for d.pendingState != nil && changeCounter < MAXIMUM_STATE_CHANGES {
-		var pending = d.pendingState
+	for tree.pendingState != nil && changeCounter < MAXIMUM_STATE_CHANGES {
+		var pending = tree.pendingState
 		changeCounter++
-		d.pendingState = nil
+		tree.pendingState = nil
 
-		if pending != d.activeState {
-			rootState := d.findCommonAncestor(d.activeState, pending)
+		if pending != tree.activeState {
+			rootState := tree.findCommonAncestor(tree.activeState, pending)
 
-			if d.activeState != nil {
-				d.activeState.OnExit(rootState)
+			if tree.activeState != nil {
+				tree.activeState.OnExit(rootState)
 			}
 
-			d.activeState = pending
+			tree.activeState = pending
 			pending.OnEnter(rootState)
 		}
 	}
 }
 
-func (d *StateTree) findGameState(name string) *GameState {
-	state, exists := d.stateMap[name]
+func (tree *StateTree) findGameState(name string) *GameState {
+	state, exists := tree.stateMap[name]
 	if exists {
 		return state
 	}
@@ -88,7 +99,7 @@ func (d *StateTree) findGameState(name string) *GameState {
 	return nil
 }
 
-func (d *StateTree) findCommonAncestor(stateA *GameState, stateB *GameState) *GameState {
+func (tree *StateTree) findCommonAncestor(stateA *GameState, stateB *GameState) *GameState {
 	if stateA != nil && stateB != nil {
 		if stateA == stateB {
 			return stateA
