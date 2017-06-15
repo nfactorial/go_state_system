@@ -41,12 +41,12 @@ func (system *MockSystem) OnDeactivate() {
 func TestNewGameState(t *testing.T) {
 	state := NewGameState(TEST_NAME)
 
-	if state.parent != nil {
+	if state.parentState != nil {
 		t.Error("State contained an unexpected parent reference.")
 	}
 
-	if state.name != TEST_NAME {
-		t.Error("Test game state contained an unexpected name", state.name)
+	if state.Name != TEST_NAME {
+		t.Error("Test game state contained an unexpected name", state.Name)
 	}
 }
 
@@ -107,15 +107,15 @@ func TestGameState_OnDestroy(t *testing.T) {
 		t.Error("Expected initCount to be 0, was", system.initCount)
 	}
 
-	if system.destroyCount != 0 {
+	if system.updateCount != 0 {
 		t.Error("Expected updateCount to be 0, was", system.updateCount)
 	}
 
-	if system.destroyCount != 0 {
+	if system.activateCount != 0 {
 		t.Error("Expected activateCount to be 0, was", system.activateCount)
 	}
 
-	if system.destroyCount != 0 {
+	if system.deactivateCount != 0 {
 		t.Error("Expected deactivateCount to be 0, was", system.deactivateCount)
 	}
 }

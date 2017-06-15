@@ -1,10 +1,13 @@
 package state_system
 
 type GameState struct {
-	parent *GameState
-	name string
+	Name string `json:"name"`
+	Parent string `json:"parent"`
+	Children []string `json:"children"`
+	Systems []string `json:"systems"`
+	parentState *GameState
 	childList []*GameState
-	systemMap map[string] IGameSystem
+	systemMap map[string] IGameSystem	// TODO: Should be a 'SystemRef' object array?
 	systemList []IGameSystem
 	updateList []IGameSystem
 }
@@ -12,7 +15,7 @@ type GameState struct {
 func NewGameState(name string) *GameState {
 	state := new(GameState)
 
-	state.name = name
+	state.Name = name
 	state.systemMap = make(map[string] IGameSystem)
 
 	return state
@@ -49,8 +52,8 @@ func (state *GameState) OnDestroy() {
 //! \param root [in] -
 //!        The game state at the root of the state switch, activation will not be passed up-to the root state.
 func (state *GameState) OnEnter(root *GameState) {
-	if state.parent != nil && state.parent != root {
-		state.parent.OnEnter(root)
+	if state.parentState != nil && state.parentState != root {
+		state.parentState.OnEnter(root)
 	}
 
 	for _, system := range state.systemList {
@@ -66,8 +69,8 @@ func (state *GameState) OnExit(root *GameState) {
 		state.systemList[loop].OnDeactivate()
 	}
 
-	if state.parent != nil && state.parent != root {
-		state.parent.OnExit(root)
+	if state.parentState != nil && state.parentState != root {
+		state.parentState.OnExit(root)
 	}
 }
 
@@ -75,8 +78,8 @@ func (state *GameState) OnExit(root *GameState) {
 //! \param updateArgs [in] -
 //!        Details about the current frame being processed.
 func (state *GameState) OnUpdate(updateArgs UpdateArgs) {
-	if state.parent != nil {
-		state.parent.OnUpdate(updateArgs)
+	if state.parentState != nil {
+		state.parentState.OnUpdate(updateArgs)
 	}
 
 	for _, system := range state.updateList {
@@ -90,8 +93,8 @@ func (state *GameState) FindSystem(name string) IGameSystem {
 		return system
 	}
 
-	if state.parent != nil {
-		return state.parent.FindSystem(name)
+	if state.parentState != nil {
+		return state.parentState.FindSystem(name)
 	}
 
 	return nil
@@ -102,6 +105,7 @@ func (state *GameState) addSystem(name string, system IGameSystem) {
 	if !exists && system != nil {
 		state.systemMap[name] = system
 		state.systemList = append(state.systemList, system)
+		state.Systems = append(state.Systems, name)
 	}
 }
 
@@ -114,8 +118,8 @@ func (state *GameState) checkParentHierarchy(root *GameState) bool {
 		return true
 	}
 
-	if state.parent != nil {
-		return state.parent.checkParentHierarchy(root)
+	if state.parentState != nil {
+		return state.parentState.checkParentHierarchy(root)
 	}
 
 	return false
