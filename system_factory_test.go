@@ -64,6 +64,26 @@ func TestSystemFactory_Unregister(t *testing.T) {
 	}
 }
 
+func TestSystemFactory_exists(t *testing.T) {
+	factory := CreateSystemFactory()
+
+	if factory.exists(TEST_FACTORY_SYSTEM_NAME) {
+		t.Error("Newly constructed factory reported presense of non-existant object.")
+	}
+
+	factory.Register(TEST_FACTORY_SYSTEM_NAME, MockGameSystemConstructor)
+
+	if !factory.exists(TEST_FACTORY_SYSTEM_NAME) {
+		t.Error("factory.exists return false after system object was registered.")
+	}
+
+	factory.Unregister(TEST_FACTORY_SYSTEM_NAME)
+
+	if factory.exists(TEST_FACTORY_SYSTEM_NAME) {
+		t.Error("factory.exists returned true after system object was removed.")
+	}
+}
+
 func TestSystemFactory_Create(t *testing.T) {
 	factory := CreateSystemFactory()
 
