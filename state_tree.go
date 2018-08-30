@@ -41,7 +41,7 @@ func (tree *StateTree) OnInitialize(initArgs *InitArgs) {
 
 	for _, state := range tree.stateMap {
 		// We only pass the call onto root states, they will pass it onto their children
-		if state.parentState == nil {
+		if state.parent == nil {
 			state.OnInitialize(initArgs)
 		}
 	}
@@ -51,7 +51,7 @@ func (tree *StateTree) OnInitialize(initArgs *InitArgs) {
 func (tree *StateTree) OnDestroy() {
 	for _, state := range tree.stateMap {
 		// We only pass the call onto root states, they will pass it onto their children
-		if state.parentState == nil {
+		if state.parent == nil {
 			state.OnDestroy()
 		}
 	}
@@ -121,8 +121,8 @@ func (tree *StateTree) findCommonAncestor(stateA *GameState, stateB *GameState) 
 			return stateA
 		}
 
-		scanA := stateA.parentState
-		scanB := stateB.parentState
+		scanA := stateA.parent
+		scanB := stateB.parent
 
 		for scanA != nil && scanB != nil {
 			if stateB.checkParentHierarchy(scanA) {
@@ -133,8 +133,8 @@ func (tree *StateTree) findCommonAncestor(stateA *GameState, stateB *GameState) 
 				return scanB
 			}
 
-			scanA = scanA.parentState
-			scanB = scanB.parentState
+			scanA = scanA.parent
+			scanB = scanB.parent
 		}
 	}
 

@@ -20,11 +20,19 @@ func (system *FactoryTestMockGameSystem) OnActivate() {
 	system.counter++
 }
 
+func (system *FactoryTestMockGameSystem) OnPostActivate() {
+
+}
+
 func (system *FactoryTestMockGameSystem) OnDeactivate() {
 
 }
 
 func (system *FactoryTestMockGameSystem) OnUpdate(updateArgs UpdateArgs) {
+
+}
+
+func (system *FactoryTestMockGameSystem) OnPostUpdate(updateArgs UpdateArgs) {
 
 }
 

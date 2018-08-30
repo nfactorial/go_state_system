@@ -3,7 +3,7 @@ package state_system
 import "testing"
 
 const (
-	TEST_NAME = "Test"
+	TEST_NAME        = "Test"
 	TEST_SYSTEM_NAME = "TestSystem"
 )
 
@@ -11,10 +11,10 @@ const (
 // verify the game state forwards the calls onto the appropriate object at the expected times.
 type MockSystem struct {
 	IGameSystem
-	destroyCount int
-	initCount int
-	updateCount int
-	activateCount int
+	destroyCount    int
+	initCount       int
+	updateCount     int
+	activateCount   int
 	deactivateCount int
 }
 
@@ -41,12 +41,12 @@ func (system *MockSystem) OnDeactivate() {
 func TestNewGameState(t *testing.T) {
 	state := NewGameState(TEST_NAME)
 
-	if state.parentState != nil {
+	if state.parent != nil {
 		t.Error("State contained an unexpected parent reference.")
 	}
 
-	if state.Name != TEST_NAME {
-		t.Error("Test game state contained an unexpected name", state.Name)
+	if state.name != TEST_NAME {
+		t.Error("Test game state contained an unexpected name", state.name)
 	}
 }
 
