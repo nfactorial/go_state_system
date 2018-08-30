@@ -1,10 +1,28 @@
 package state_system
 
+type GameSystemDesc struct {
+	Name       string                 `json:"name"`
+	SystemType string                 `json:"type"`
+	Params     map[string]interface{} `json:"params"`
+}
+
+type GameStateDesc struct {
+	Name     string           `json:"name"`
+	Children []string         `json:"children"`
+	Systems  []GameSystemDesc `json:"systems"`
+}
+
+type StateTreeDesc struct {
+	Name   string          `json:"name"`
+	Main   string          `json:"main"`
+	States []GameStateDesc `json:"states"`
+}
+
 type GameState struct {
-	parent *GameState
-	name string
-	childList []*GameState
-	systemMap map[string] IGameSystem
+	parent     *GameState
+	name       string
+	childList  []*GameState
+	systemMap  map[string]IGameSystem
 	systemList []IGameSystem
 	updateList []IGameSystem
 }
@@ -13,7 +31,7 @@ func NewGameState(name string) *GameState {
 	state := new(GameState)
 
 	state.name = name
-	state.systemMap = make(map[string] IGameSystem)
+	state.systemMap = make(map[string]IGameSystem)
 
 	return state
 }
@@ -58,6 +76,19 @@ func (state *GameState) OnEnter(root *GameState) {
 	}
 }
 
+//! \brief Invoked after the game becomes active and has completed the OnEnter loop.
+//! \param root [in] -
+//!		   The game state at the root of the state switch, activation will not be passed up-to the root state.
+func (state *GameState) OnPostEnter(root *GameState) {
+	if state.parent != nil && state.parent != root {
+		state.parent.OnPostEnter(root)
+	}
+
+	for _, system := range state.systemList {
+		system.OnPostActivate()
+	}
+}
+
 //! \brief Invoked when the game state is no longer active within the running title.
 //! \oaram root [in] -
 //!        The game state at the root of the state switch, de-activation will not be passed up-to the root state.
@@ -84,6 +115,20 @@ func (state *GameState) OnUpdate(updateArgs UpdateArgs) {
 	}
 }
 
+func (state *GameState) OnPostUpdate(updateArgs UpdateArgs) {
+	if state.parent != nil {
+		state.parent.OnPostUpdate(updateArgs)
+	}
+
+	for _, system := range state.updateList {
+		system.OnPostUpdate(updateArgs)
+	}
+}
+
+//! \brief	Retrieves an IGameSystem object that is associated with the specified name.
+//!			Game systems can only be found within the current game state or in the parent hierarchy.
+//! \param  name [in] - The name of the IGameSystem instance to be retrieved.
+//! \return The IGameSystem associated with the specified name or nil if one could not be found.
 func (state *GameState) FindSystem(name string) IGameSystem {
 	system, exists := state.systemMap[name]
 	if exists {

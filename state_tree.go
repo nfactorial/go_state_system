@@ -3,15 +3,15 @@ package state_system
 const MAXIMUM_STATE_CHANGES = 16
 
 type StateTree struct {
-	stateMap map[string] *GameState
+	stateMap     map[string]*GameState
 	pendingState *GameState
-	activeState *GameState
+	activeState  *GameState
 }
 
 func NewStateTree() *StateTree {
 	tree := new(StateTree)
 
-	tree.stateMap = make(map[string] *GameState)
+	tree.stateMap = make(map[string]*GameState)
 
 	return tree
 }
@@ -51,6 +51,14 @@ func (tree *StateTree) OnUpdate(updateArgs UpdateArgs) {
 	tree.commitStateChange()
 }
 
+func (tree *StateTree) OnPostUpdate(updateArgs UpdateArgs) {
+	if tree.activeState != nil {
+		tree.activeState.OnPostUpdate(updateArgs)
+	}
+
+	tree.commitStateChange()
+}
+
 func (tree *StateTree) requestStateChange(name string) {
 	state, exists := tree.stateMap[name]
 	if exists {
@@ -73,7 +81,8 @@ func (tree *StateTree) addState(name string, state *GameState) bool {
 func (tree *StateTree) commitStateChange() {
 	changeCounter := 0
 	for tree.pendingState != nil && changeCounter < MAXIMUM_STATE_CHANGES {
-		var pending = tree.pendingState
+		pending := tree.pendingState
+
 		changeCounter++
 		tree.pendingState = nil
 
@@ -86,6 +95,7 @@ func (tree *StateTree) commitStateChange() {
 
 			tree.activeState = pending
 			pending.OnEnter(rootState)
+			pending.OnPostEnter(rootState)
 		}
 	}
 }

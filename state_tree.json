@@ -1,0 +1,123 @@
+{
+    "name": "game",
+    "main": "game_start",
+    "states": [
+      {
+        "name": "root",
+        "children": [
+          "main_game"
+        ],
+        "systems": [
+          {
+            "name": "LevelInformation"
+          }
+        ]
+      },
+      {
+        "name": "main_game",
+        "children": [
+          "game_active", "game_over"
+        ],
+        "systems": [
+          {
+            "name": "TerrainProvider",
+            "params": {
+              "levelInformation": "LevelInformation"
+            }
+          }
+        ]
+      },
+      {
+        "name": "game_active",
+        "children": [
+          "game_start"
+        ],
+        "systems": [
+          {
+            "name": "game_client_receiver",
+            "type": "GameClientReceiver",
+            "params": {
+              "scene": "Scene"
+            }
+          },
+          {
+            "name": "Scene"
+          },
+          {
+            "name": "ScoreTracker",
+            "params": {
+              "clientReceiver": "game_client_receiver"
+            }
+          },
+          {
+            "name": "BossController",
+            "params": {
+              "scene": "Scene",
+              "levelInformation": "LevelInformation"
+            }
+          },
+          {
+            "name": "DroneSpawner",
+            "params": {
+              "scene": "Scene"
+            }
+          },
+          {
+            "name": "SceneTimeline",
+            "params": {
+              "levelInformation": "LevelInformation"
+            }
+          },
+          {
+            "name": "RingSpawner",
+            "params": {
+              "scene": "Scene",
+              "terrainProvider": "TerrainProvider",
+              "sceneTimeline": "SceneTimeline"
+            }
+          },
+          {
+            "name": "RingCollector",
+            "params": {
+              "clientReceiver": "game_client_receiver",
+              "ringSpawner": "RingSpawner"
+            }
+          }
+        ]
+      },
+      {
+        "name": "game_start"
+      },
+      {
+        "name": "game_over",
+        "children": [
+          "game_end"
+        ],
+        "systems": [
+          {
+            "name": "game_end_client_receiver",
+            "type": "GameClientReceiver",
+            "params": {
+            }
+          },
+          {
+            "name": "postGame_Timer",
+            "type": "Timer"
+          }
+        ]
+      },
+      {
+        "name": "game_end",
+        "systems": [
+          {
+            "name": "WaitForGame",
+            "params": {
+              "timer": "postGame_Timer",
+              "maximumTime": 10,
+              "nextState": "game_start"
+            }
+          }
+        ]
+      }
+    ]
+  }
