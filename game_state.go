@@ -115,6 +115,9 @@ func (state *GameState) OnUpdate(updateArgs UpdateArgs) {
 	}
 }
 
+//! \brief	Called each frame while the game state is active and after the main OnUpdate method has completed.
+//! \param	updateArgs [in] -
+//!			Details about the current frame being processed.
 func (state *GameState) OnPostUpdate(updateArgs UpdateArgs) {
 	if state.parent != nil {
 		state.parent.OnPostUpdate(updateArgs)

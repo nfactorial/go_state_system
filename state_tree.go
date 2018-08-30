@@ -3,6 +3,9 @@ package state_system
 const MAXIMUM_STATE_CHANGES = 16
 
 type StateTree struct {
+	Name         string       `json:"name"`
+	Main         string       `json:"main"`
+	StateList    []*GameState `json:"states"`
 	stateMap     map[string]*GameState
 	pendingState *GameState
 	activeState  *GameState
@@ -16,6 +19,20 @@ func NewStateTree() *StateTree {
 	return tree
 }
 
+// Adds a new GameState instance to the state tree.
+func (tree *StateTree) AddState(name string, state *GameState) bool {
+	if state != nil {
+		if tree.findGameState(name) == nil {
+			// TODO: Rather than have a slice and a map, can we just have the one?
+			tree.StateList = append(tree.StateList, state)
+			tree.stateMap[name] = state
+			return true
+		}
+	}
+
+	return false
+}
+
 //! \brief Invoked when the state tree is ready for use and game systems may be prepared for processing.
 //! \param initArgs [in] -
 //!        Initialization information for use by the state tree.
@@ -24,7 +41,7 @@ func (tree *StateTree) OnInitialize(initArgs *InitArgs) {
 
 	for _, state := range tree.stateMap {
 		// We only pass the call onto root states, they will pass it onto their children
-		if state.parent == nil {
+		if state.parentState == nil {
 			state.OnInitialize(initArgs)
 		}
 	}
@@ -34,7 +51,7 @@ func (tree *StateTree) OnInitialize(initArgs *InitArgs) {
 func (tree *StateTree) OnDestroy() {
 	for _, state := range tree.stateMap {
 		// We only pass the call onto root states, they will pass it onto their children
-		if state.parent == nil {
+		if state.parentState == nil {
 			state.OnDestroy()
 		}
 	}
@@ -65,17 +82,6 @@ func (tree *StateTree) requestStateChange(name string) {
 		tree.pendingState = state
 	}
 	// TODO: Should we raise/log an error if the requested state was invalid?
-}
-
-func (tree *StateTree) addState(name string, state *GameState) bool {
-	if state != nil {
-		if tree.findGameState(name) == nil {
-			tree.stateMap[name] = state
-			return true
-		}
-	}
-
-	return false
 }
 
 func (tree *StateTree) commitStateChange() {
@@ -115,8 +121,8 @@ func (tree *StateTree) findCommonAncestor(stateA *GameState, stateB *GameState) 
 			return stateA
 		}
 
-		scanA := stateA.parent
-		scanB := stateB.parent
+		scanA := stateA.parentState
+		scanB := stateB.parentState
 
 		for scanA != nil && scanB != nil {
 			if stateB.checkParentHierarchy(scanA) {
@@ -127,8 +133,8 @@ func (tree *StateTree) findCommonAncestor(stateA *GameState, stateB *GameState) 
 				return scanB
 			}
 
-			scanA = scanA.parent
-			scanB = scanB.parent
+			scanA = scanA.parentState
+			scanB = scanB.parentState
 		}
 	}
 
